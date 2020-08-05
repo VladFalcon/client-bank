@@ -1,4 +1,5 @@
 package com.falcon.clientbank.enteties;
 
-public class Currency {
+public enum Currency {
+    USD, EUR, UAH, CHF, GBP;
 }
