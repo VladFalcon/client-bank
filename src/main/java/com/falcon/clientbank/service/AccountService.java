@@ -32,12 +32,12 @@ public class AccountService {
         return false;
     }
 
-    public boolean transferFromAccountToAccount(Long id1, Long id2, Double sum){
-        Account thisA1 = (Account) accountDao.getOne(id1);
-        Account thisA2 = (Account) accountDao.getOne(id2);
-        if(thisA1.getBalance() >= sum){
-            thisA1.setBalance(thisA1.getBalance() - sum);
-            thisA2.setBalance(thisA2.getBalance() + sum);
+    public boolean transferFromAccountToAccount(Long idFrom, Long idTo, Double sum){
+        Account accountFrom = (Account) accountDao.getOne(idFrom);
+        Account accountTo = (Account) accountDao.getOne(idTo);
+        if(accountFrom.getBalance() >= sum){
+            accountFrom.setBalance(accountFrom.getBalance() - sum);
+            accountTo.setBalance(accountTo.getBalance() + sum);
             return true;
         }
         return false;

@@ -30,7 +30,7 @@ public class AccountController {
     }
 
     @PostMapping("/accountTransfer")
-    boolean transferMoneyFromAccountToAccount(Long id1, Long id2, Double sum){
-        return accountService.transferFromAccountToAccount(id1, id2, sum);
+    boolean transferMoneyFromAccountToAccount(Long idFrom, Long idTo, Double sum){
+        return accountService.transferFromAccountToAccount(idFrom, idTo, sum);
     }
 }
