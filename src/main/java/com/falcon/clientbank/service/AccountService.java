@@ -5,42 +5,63 @@ import com.falcon.clientbank.enteties.Account;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
 @Service
+@Transactional
 public class AccountService {
-
     @Autowired
     private AccountDao accountDao;
 
-    public List<Account> getAllAccounts(){
-        return accountDao.findAll();
-    }
-
-    public boolean topUpAccountBalance(Long id, Double sum){
-        Account thisAccount = (Account) accountDao.getOne(id);
-        thisAccount.setBalance(thisAccount.getBalance() + sum);
-        return true;
-    }
-
-    public boolean withdrawFromAccountBalance(Long id, Double sum){
-        Account thisAccount = (Account) accountDao.getOne(id);
-        if(thisAccount.getBalance() >= sum){
-            thisAccount.setBalance(thisAccount.getBalance() - sum);
+    public boolean delete(long accountId){
+        Account account = accountDao.getOne(accountId);
+        if(account != null){
+            accountDao.delete(account);
             return true;
         }
         return false;
     }
 
-    public boolean transferFromAccountToAccount(Long idFrom, Long idTo, Double sum){
-        Account accountFrom = (Account) accountDao.getOne(idFrom);
-        Account accountTo = (Account) accountDao.getOne(idTo);
-        if(accountFrom.getBalance() >= sum){
-            accountFrom.setBalance(accountFrom.getBalance() - sum);
-            accountTo.setBalance(accountTo.getBalance() + sum);
-            return true;
-        }
-        return false;
+    public Account getByNumber(String number){
+        return accountDao.getByNumber(number);
     }
+
+    public Account withdraw(String number, double amount){
+        if(amount > 0){
+            Account account = accountDao.getByNumber(number);
+            if(account != null && account.getBalance() >= amount) {
+                account.setBalance(account.getBalance() - amount);
+                return accountDao.save(account);
+            }
+        }
+        return null;
+    }
+
+    public Account topUp(String number, double amount){
+        if(amount > 0){
+            Account account = accountDao.getByNumber(number);
+            if (account != null) {
+                account.setBalance(account.getBalance() + amount);
+                return accountDao.save(account);
+            }
+        }
+        return null;
+    }
+
+    public Account transfer(String senderNumber, String receiverNumber, double amount){
+        if(amount > 0) {
+            Account sender = accountDao.getByNumber(senderNumber);
+            if(sender != null && amount > 0 && sender.getBalance() >= amount){
+                Account receiver = accountDao.getByNumber(receiverNumber);
+                sender.setBalance(sender.getBalance() - amount);
+                receiver.setBalance(receiver.getBalance() + amount);
+                accountDao.save(receiver);
+                return accountDao.save(sender);
+            }
+        }
+        return null;
+    }
+
 }
 

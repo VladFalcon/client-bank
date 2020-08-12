@@ -1,32 +1,44 @@
 package com.falcon.clientbank.enteties;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.annotations.GenerationTime;
+import org.hibernate.annotations.GeneratorType;
+import javax.annotation.processing.Generated;
+import javax.persistence.*;
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 
-public class Account {
-    private Long id;
+@Entity
+@Table(name = "accounts")
+@NamedQueries({
+        @NamedQuery(name = "accounts.findAll",
+                query = "select a from Account a"),
+        @NamedQuery(name = "accounts.findByNumber",
+                query = "select a from Account a where number=:number"),
+})
+public class Account extends AbstractEntity implements Serializable {
+    @Column(name = "number", unique = true, nullable = false, updatable = false)
     private String number;
+    @Column(name= "currency", nullable = false)
+    @Enumerated(EnumType.STRING)
     private Currency currency;
+    @Column(name = "balance")
     private Double balance;
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @JoinColumn(name ="customer_id",
+            referencedColumnName = "id",
+            nullable = false,
+            updatable = false)
     private Customer customer;
-    private static Long idCounter = 1L;
 
-    public Account(Currency currency, Customer customer) {
-        this.number = UUID.randomUUID().toString();
+    public Account() {}
+    public Account(Currency currency, Customer customer){
         this.currency = currency;
-        this.balance = 0.0;
         this.customer = customer;
-        this.id = idCounter;
-        idCounter++;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId() {
-        this.id = idCounter;
-        idCounter++;
+        this.balance = 0.0;
+        this.number = UUID.randomUUID().toString();
     }
 
     public String getNumber() {
@@ -66,26 +78,25 @@ public class Account {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Account account = (Account) o;
-        return id.equals(account.id) &&
+        return this.getId().equals(account.getId()) &&
                 number.equals(account.number) &&
                 currency == account.currency &&
-                balance.equals(account.balance) &&
-                customer.equals(account.customer);
+                Objects.equals(balance, account.balance) &&
+                Objects.equals(customer, account.customer);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, number, currency, balance, customer);
+        return Objects.hash(this.getId());
     }
 
     @Override
     public String toString() {
         return "Account{" +
-                "id=" + id +
+                "id=" + this.getId() +
                 ", number='" + number + '\'' +
                 ", currency=" + currency +
                 ", balance=" + balance +
-                ", customer=" + customer +
                 '}';
     }
 }

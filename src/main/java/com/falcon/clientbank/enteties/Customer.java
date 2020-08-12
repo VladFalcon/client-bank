@@ -1,33 +1,56 @@
 package com.falcon.clientbank.enteties;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import javax.persistence.*;
+import java.io.Serializable;
+import java.util.*;
 
-public class Customer {
-    private Long id;
+@Entity
+@Table(name ="customers")
+@NamedQueries({
+        @NamedQuery(name = "customers.findAll",
+                query = "select c from Customer c"),
+})
+public class Customer extends AbstractEntity implements Serializable {
+    @Column(name = "name", nullable = false)
     private String name;
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
+    @Column(name = "age", nullable = false)
     private Integer age;
+    @OneToMany(mappedBy = "customer",
+            cascade = {CascadeType.REMOVE, CascadeType.MERGE},
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
     private List<Account> accounts;
-    private static Long idCounter = 1L;
+    @ManyToMany(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
+    @JoinTable(name = "customers_employers",
+            joinColumns = {@JoinColumn(name = "customer_id", referencedColumnName = "id")},
+            inverseJoinColumns = { @JoinColumn(name="employer_id", referencedColumnName = "id")}
+    )
 
+    private Set<Employer> employers = new HashSet<>();
+
+
+    public Set<Employer> getEmployers() {
+        return employers;
+    }
+
+    public void setEmployers(Set<Employer> employers) {
+        this.employers = employers;
+    }
+
+    public void addEmployer(Employer employer){
+        this.employers.add(employer);
+        employer.getCustomers().add(this);
+    }
+
+    public Customer() {}
     public Customer(String name, String email, Integer age) {
         this.name = name;
         this.email = email;
         this.age = age;
         this.accounts = new ArrayList<>();
-        this.id = idCounter;
-        idCounter++;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId() {
-        this.id = idCounter;
-        idCounter++;
     }
 
     public String getName() {
@@ -67,27 +90,23 @@ public class Customer {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Customer customer = (Customer) o;
-        return id.equals(customer.id) &&
-                name.equals(customer.name) &&
-                email.equals(customer.email) &&
-                age.equals(customer.age) &&
-                Objects.equals(accounts, customer.accounts);
+        return this.getId().equals(customer.getId()) &&
+                email.equals(customer.email);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, email, age, accounts);
+        return Objects.hash(this.getId(), email);
     }
 
     @Override
-    public String
-    toString() {
+    public String toString() {
         return "Customer{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
+                "name='" + name + '\'' +
                 ", email='" + email + '\'' +
                 ", age=" + age +
                 ", accounts=" + accounts +
+                ", employers=" + employers +
                 '}';
     }
 }

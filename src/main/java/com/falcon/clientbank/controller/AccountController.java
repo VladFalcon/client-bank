@@ -2,35 +2,54 @@ package com.falcon.clientbank.controller;
 
 import com.falcon.clientbank.enteties.Account;
 import com.falcon.clientbank.service.AccountService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:3000")
+@RequestMapping(value = "/api/" + ApiConstants.API_VERSION + "/accounts")
 public class AccountController {
+
     @Autowired
-    AccountService accountService;
+    private AccountService accountService;
 
-    @GetMapping("/account")
-    List<Account> getAllAccounts(){
-        return accountService.getAllAccounts();
+    @GetMapping(value = "/{number}")
+    public Account getAccount(@PathVariable("number") String number, HttpServletResponse response){
+        Account account = accountService.getByNumber(number);
+        if(account == null) response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        return account;
     }
+    @PutMapping(value = "/withdrawal/{number}")
+    public Account withdraw(@PathVariable("number") String number,
+                            @RequestBody Map<String, Double> amount,
+                            HttpServletResponse response) throws JsonProcessingException {
 
-    @PostMapping("/accountTopUp")
-    boolean replenishAccountBalance(Long id, Double sum){
-        return accountService.topUpAccountBalance(id, sum);
+        Account account = accountService.withdraw(number, amount.get("amount"));
+        if(account == null) response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        return account;
     }
+    @PutMapping(value = "/top-up/{number}")
+    public Account topUp(@PathVariable("number") String number,
+                         @RequestBody Map<String, Double> amount,
+                         HttpServletResponse response) {
 
-    @PostMapping("/accountWithdraw")
-    boolean takeOffFromAccountBalance(Long id, Double sum){
-        return accountService.withdrawFromAccountBalance(id, sum);
+        Account account = accountService.topUp(number, amount.get("amount"));
+        if(account == null) response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        return account;
     }
+    @PutMapping(value = "/transfer/{sender}/{receiver}")
+    public Account topUp(@PathVariable("sender") String sender,
+                         @PathVariable("receiver") String receiver,
+                         @RequestBody Map<String, Double> amount,
+                         HttpServletResponse response) {
 
-    @PostMapping("/accountTransfer")
-    boolean transferMoneyFromAccountToAccount(Long idFrom, Long idTo, Double sum){
-        return accountService.transferFromAccountToAccount(idFrom, idTo, sum);
+        Account account = accountService.transfer(sender, receiver, amount.get("amount"));
+        if(account == null) response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        return account;
     }
 }

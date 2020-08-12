@@ -1,60 +1,57 @@
 package com.falcon.clientbank.dao;
 
 import com.falcon.clientbank.enteties.Account;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
+import javax.persistence.EntityManager;
 import java.util.List;
 
 @Repository
-public class AccountDao implements Dao<Account>{
+public  class AccountDao implements Dao<Account> {
 
-    private final List<Account> accounts = new ArrayList<>();
+    @Autowired
+    private EntityManager em;
 
     @Override
-    public Account save(Account obj) {
-        accounts.add((Account) obj);
-        return (Account) obj;
+    public Account save(Account account) {
+        return em.merge(account);
     }
 
     @Override
-    public boolean delete(Account obj) {
-        return accounts.remove((Account) obj);
+    public void delete(Account account) {
+        em.remove(account);
     }
 
     @Override
-    public void deleteAll(List<Account> entities) {
-        accounts.clear();
+    public void deleteAll(List<Account> accounts) {
+//        em.createNamedQuery("accounts.deleteAll").executeUpdate();
     }
 
     @Override
-    public void saveAll(List<Account> entities) {
-        accounts.containsAll(entities);
+    public void saveAll(List<Account> accounts) {
+        em.persist(accounts);
     }
 
     @Override
     public List<Account> findAll() {
-        return accounts;
+        return em.createNamedQuery("accounts.findAll", Account.class).getResultList();
+
     }
 
     @Override
     public boolean deleteById(long id) {
-        for(int i = 0; i < accounts.size(); i++){
-            if(accounts.get(i).getId() == id){
-                accounts.remove(accounts.get(i));
-                return true;
-            }
-        }
         return false;
     }
 
+
     @Override
     public Account getOne(long id) {
-        for(int i = 0; i < accounts.size(); i++){
-            if(accounts.get(i).getId() == id){
-                return accounts.get(i);
-            }
-        }
-        return null;
+        return em.find(Account.class, id);
+    }
+
+    public Account getByNumber(String number){
+        return em.createNamedQuery("accounts.findByNumber", Account.class)
+                .setParameter("number", number).getSingleResult();
     }
 }

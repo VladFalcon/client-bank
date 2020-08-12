@@ -1,51 +1,41 @@
 package com.falcon.clientbank.dao;
 
-import com.falcon.clientbank.enteties.Account;
 import com.falcon.clientbank.enteties.Customer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
+import javax.persistence.EntityManager;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
-public class CustomerDao implements Dao<Customer>{
-    private List<Customer> customers = new ArrayList<>();
+public class CustomerDao implements Dao<Customer> {
+
+    @Autowired
+    private EntityManager em;
 
     @Override
     public Customer save(Customer customer) {
-        customers.add(customer);
-        return customer;
-    }
-
-    public boolean update(Customer customer) {
-        customers.stream().filter(el -> el.getId().equals(customer.getId())).findFirst().ifPresent(el -> {
-            el.setName(customer.getName());
-            el.setEmail(customer.getEmail());
-            el.setAge(customer.getAge());
-        });
-
-        return true;
+        return em.merge(customer);
     }
 
     @Override
-    public boolean delete(Customer customer) {
-        return customers.remove(customer);
+    public void delete(Customer customer) {
+        em.remove(customer);
     }
 
     @Override
     public void deleteAll(List<Customer> customers) {
-
+        em.remove(customers);
     }
 
     @Override
     public void saveAll(List<Customer> customers) {
-
+        em.merge(customers);
     }
 
     @Override
     public List<Customer> findAll() {
-        return customers;
+        return em.createNamedQuery("customers.findAll", Customer.class).getResultList();
     }
 
     @Override
@@ -53,23 +43,9 @@ public class CustomerDao implements Dao<Customer>{
         return false;
     }
 
+
     @Override
     public Customer getOne(long id) {
-        return customers.get((int) id);
-    }
-
-    public Account createAccount(Account account, Long id) {
-        customers.stream()
-                .filter(el -> el.getId().equals(id))
-                .findFirst()
-                .ifPresent(el -> el.getAccounts().add(account));
-        return account;
-    }
-
-    public boolean deleteAccount(Account account, Long id) {
-        Optional<Customer> optionalCustomer = customers.stream()
-                .filter(el -> el.getId().equals(id))
-                .findFirst();
-        return optionalCustomer.get().getAccounts().remove(account);
+        return em.find(Customer.class, id);
     }
 }
